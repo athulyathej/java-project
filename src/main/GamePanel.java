@@ -3,8 +3,12 @@ package main;
 import entity.Player;
 import tile.TileManager;
 
+
 import javax.swing.JPanel;
 import java.awt.*;
+import entity.Enemy;
+import java.util.ArrayList;
+import java.util.Random;
 
 public class GamePanel extends JPanel implements Runnable {
 
@@ -27,7 +31,10 @@ public class GamePanel extends JPanel implements Runnable {
     // FPS
     int FPS = 60;
 
-    TileManager tileM = new TileManager(this);
+    public TileManager tileM = new TileManager(this);
+    public ArrayList<Enemy> enemies = new ArrayList<>();
+    public int spawnTimer = 0;
+    Random random = new Random();
     KeyHandler keyH = new KeyHandler();
     Thread gameThread;
     public CollisionChecker cChecker = new CollisionChecker(this);
@@ -83,20 +90,52 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     public void update() {
-
         player.update();
 
+        // Spawn an enemy every 180 frames (approx 3 seconds at 60FPS)
+        spawnTimer++;
+        if(spawnTimer >= 180) {
+            spawnEnemy();
+            spawnTimer = 0;
+        }
+
+        for(int i = 0; i < enemies.size(); i++) {
+            enemies.get(i).update();
+        }
     }
 
     public void paintComponent(Graphics g) {
-
         super.paintComponent(g);
-
         Graphics2D g2 = (Graphics2D)g;
 
         tileM.draw(g2);
         player.draw(g2);
 
+        // Draw all enemies
+        for(int i = 0; i < enemies.size(); i++) {
+            enemies.get(i).draw(g2);
+        }
+
         g2.dispose();
+    }
+    public void spawnEnemy() {
+        int maxAttempts = 10; // Prevent infinite loops if map is full
+        for (int i = 0; i < maxAttempts; i++) {
+            int randCol = random.nextInt(maxWorldCol);
+            int randRow = random.nextInt(maxWorldRow);
+
+            int tileNum = tileM.mapTileNum[randCol][randRow];
+
+            if (!tileM.tile[tileNum].collision) {
+                int colDiff = Math.abs(randCol - (player.worldX / tileSize));
+                int rowDiff = Math.abs(randRow - (player.worldY / tileSize));
+
+                // Ensure enemy spawns at least 6 tiles away from player
+                if (colDiff > 6 || rowDiff > 6) {
+                    enemies.add(new Enemy(this, randCol * tileSize, randRow * tileSize));
+                    break;
+                }
+            }
+        }
     }
 }
