@@ -4,6 +4,9 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 public class Entity {
+    public int maxLife;
+    public int life;
+    public boolean alive = true;
 
     public int worldX,worldY;
     public int speed;
