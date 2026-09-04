@@ -1,6 +1,7 @@
 package main;
 
 import entity.Player;
+import entity.Projectile;
 import tile.TileManager;
 
 
@@ -13,6 +14,7 @@ import java.util.Random;
 public class GamePanel extends JPanel implements Runnable {
 
     //SCREEN SETTINGS
+    public ArrayList<Projectile> projectiles = new ArrayList<>();
     final int originalTileSize = 16;
     final int scale = 3;
 
@@ -92,15 +94,23 @@ public class GamePanel extends JPanel implements Runnable {
     public void update() {
         player.update();
 
-        // Spawn an enemy every 180 frames (approx 3 seconds at 60FPS)
+        // Check if this block was accidentally removed
         spawnTimer++;
-        if(spawnTimer >= 180) {
+        if(spawnTimer >= 180) { // Spawns every ~3 seconds
             spawnEnemy();
             spawnTimer = 0;
         }
 
-        for(int i = 0; i < enemies.size(); i++) {
-            enemies.get(i).update();
+        for (int i = 0; i < projectiles.size(); i++) {
+            Projectile p = projectiles.get(i);
+            if (p.alive) p.update();
+            else { projectiles.remove(i); i--; }
+        }
+
+        for (int i = 0; i < enemies.size(); i++) {
+            Enemy e = enemies.get(i);
+            if (e.alive) e.update();
+            else { enemies.remove(i); i--; }
         }
     }
 
@@ -111,9 +121,14 @@ public class GamePanel extends JPanel implements Runnable {
         tileM.draw(g2);
         player.draw(g2);
 
-        // Draw all enemies
+        // Make sure this enemy loop is still here
         for(int i = 0; i < enemies.size(); i++) {
             enemies.get(i).draw(g2);
+        }
+
+        // Projectile loop
+        for (Projectile p : projectiles) {
+            p.draw(g2);
         }
 
         g2.dispose();

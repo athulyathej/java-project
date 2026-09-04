@@ -11,6 +11,7 @@ import java.io.IOException;
 
 public class Player extends Entity {
 
+    public int shootCooldown = 0;
     GamePanel gp;
     KeyHandler keyH;
 
@@ -129,8 +130,27 @@ public class Player extends Entity {
                 spriteCounter = 0;
             }
         }
+        shootCooldown++;
+        if (shootCooldown >= 60) { // 60 frames = 1 second at 60 FPS
+            Enemy closestEnemy = null;
+            double closestDist = 200; // Attack range in pixels
 
+            for (Enemy enemy : gp.enemies) {
+                if (!enemy.alive) continue;
 
+                double dist = Math.sqrt(Math.pow(enemy.worldX - worldX, 2) + Math.pow(enemy.worldY - worldY, 2));
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    closestEnemy = enemy;
+                }
+            }
+
+            // Spawn projectile if an enemy is in range
+            if (closestEnemy != null) {
+                gp.projectiles.add(new Projectile(gp, worldX, worldY, closestEnemy));
+                shootCooldown = 0;
+            }
+        }
     }
 
     public void draw(Graphics2D g2) {

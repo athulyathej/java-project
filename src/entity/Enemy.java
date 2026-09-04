@@ -10,12 +10,15 @@ public class Enemy extends Entity {
     GamePanel gp;
 
     public Enemy(GamePanel gp, int worldX, int worldY) {
+        this.maxLife = 3;
+        this.life = this.maxLife;
         this.gp = gp;
         this.worldX = worldX;
         this.worldY = worldY;
         this.speed = 2; // Slower than player
         this.solidArea = new Rectangle(12, 16, 24, 24); // Hitbox
         this.direction = "down";
+        this.alive= true;
     }
 
     public void update() {
