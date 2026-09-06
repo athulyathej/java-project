@@ -4,7 +4,7 @@ import entity.Player;
 import entity.Projectile;
 import tile.TileManager;
 
-
+import entity.ExpGem;
 import javax.swing.JPanel;
 import java.awt.*;
 import entity.Enemy;
@@ -15,6 +15,7 @@ public class GamePanel extends JPanel implements Runnable {
 
     //SCREEN SETTINGS
     public ArrayList<Projectile> projectiles = new ArrayList<>();
+    public ArrayList<ExpGem> expGems = new ArrayList<>();
     final int originalTileSize = 16;
     final int scale = 3;
 
@@ -108,9 +109,55 @@ public class GamePanel extends JPanel implements Runnable {
         }
 
         for (int i = 0; i < enemies.size(); i++) {
+
             Enemy e = enemies.get(i);
-            if (e.alive) e.update();
-            else { enemies.remove(i); i--; }
+
+            if (e.alive) {
+
+                e.update();
+
+            } else {
+
+                // Enemy died -> drop EXP gem
+                expGems.add(new ExpGem(this, e.worldX, e.worldY));
+
+                enemies.remove(i);
+                i--;
+            }
+        }
+        // EXP GEM COLLECTION
+        for (int i = 0; i < expGems.size(); i++) {
+
+            ExpGem gem = expGems.get(i);
+
+            if (gem.alive) {
+
+                Rectangle gemHitbox = new Rectangle(
+                        gem.worldX,
+                        gem.worldY,
+                        gem.solidArea.width,
+                        gem.solidArea.height
+                );
+
+                Rectangle playerHitbox = new Rectangle(
+                        player.worldX + player.solidArea.x,
+                        player.worldY + player.solidArea.y,
+                        player.solidArea.width,
+                        player.solidArea.height
+                );
+
+                if (gemHitbox.intersects(playerHitbox)) {
+
+                    player.gainExp(gem.expValue);
+
+                    gem.alive = false;
+                }
+
+            } else {
+
+                expGems.remove(i);
+                i--;
+            }
         }
     }
 
@@ -119,6 +166,12 @@ public class GamePanel extends JPanel implements Runnable {
         Graphics2D g2 = (Graphics2D)g;
 
         tileM.draw(g2);
+
+// Draw EXP gems
+        for (ExpGem gem : expGems) {
+            gem.draw(g2);
+        }
+
         player.draw(g2);
 
         // Make sure this enemy loop is still here

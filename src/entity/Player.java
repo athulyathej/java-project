@@ -15,6 +15,11 @@ public class Player extends Entity {
     GamePanel gp;
     KeyHandler keyH;
 
+    // EXP and Level
+    public int level = 1;
+    public int exp = 0;
+    public int nextLevelExp = 50;
+
     public final int screenX;
     public final int screenY;
 
@@ -192,5 +197,20 @@ public class Player extends Entity {
                 break;
         }
         g2.drawImage(image, screenX, screenY, null);
+    }
+    public void gainExp(int amount) {
+
+        exp += amount;
+
+        if (exp >= nextLevelExp) {
+
+            level++;
+
+            exp -= nextLevelExp;
+
+            nextLevelExp = (int)(nextLevelExp * 1.5);
+
+            System.out.println("Level Up! Current Level: " + level);
+        }
     }
 }
