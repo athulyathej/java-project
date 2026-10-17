@@ -15,6 +15,10 @@ public class Player extends Entity {
     GamePanel gp;
     KeyHandler keyH;
 
+    // Health & Invincibility
+    public boolean invincible = false;
+    public int invincibleCounter = 0;
+
     // EXP and Level
     public int level = 1;
     public int exp = 0;
@@ -27,8 +31,8 @@ public class Player extends Entity {
         this.gp = gp;
         this.keyH = keyH;
 
-        screenX = gp.screenWidth/2 - (gp.tileSize/2);
-        screenY = gp.screenHeight/2 - (gp.tileSize/2);
+        screenX = gp.screenWidth / 2 - (gp.tileSize / 2);
+        screenY = gp.screenHeight / 2 - (gp.tileSize / 2);
 
         solidArea = new Rectangle(12, 16, 32, 32);
 
@@ -37,30 +41,15 @@ public class Player extends Entity {
     }
 
     public void setDefaultValues() {
-
         worldX = gp.tileSize * 23;
         worldY = gp.tileSize * 21;
         speed = 4;
         direction = "down";
+        maxLife = 6; // 6 HP points (e.g., 3 hearts at 2 HP each)
+        life = maxLife;
     }
 
     public void getPlayerImage() {
-
-
-        try {
-
-            up1 = ImageIO.read(getClass().getResourceAsStream("/Player/boy_up_1.png"));
-            up2 = ImageIO.read(getClass().getResourceAsStream("/Player/boy_up_2.png"));
-            down1 = ImageIO.read(getClass().getResourceAsStream("/Player/boy_down_1.png"));
-            down2 = ImageIO.read(getClass().getResourceAsStream("/Player/boy_down_2.png"));
-            left1 = ImageIO.read(getClass().getResourceAsStream("/Player/boy_left_1.png"));
-            left2 = ImageIO.read(getClass().getResourceAsStream("/Player/boy_left_2.png"));
-            right1 = ImageIO.read(getClass().getResourceAsStream("/Player/boy_right_1.png"));
-            right2 = ImageIO.read(getClass().getResourceAsStream("/Player/boy_right_2.png"));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
         up1 = setup("boy_up_1");
         up2 = setup("boy_up_2");
         down1 = setup("boy_down_1");
@@ -72,77 +61,60 @@ public class Player extends Entity {
     }
 
     public BufferedImage setup(String imageName) {
-
         UtilityTool uTool = new UtilityTool();
         BufferedImage image = null;
-
         try {
             image = ImageIO.read(getClass().getResourceAsStream("/Player/" + imageName + ".png"));
             image = uTool.scaleImage(image, gp.tileSize, gp.tileSize);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
         return image;
     }
 
-
     public void update() {
-
-        if(keyH.upPressed || keyH.downPressed || keyH.leftPressed || keyH.rightPressed) {
-
-            if(keyH.upPressed) {
-                direction = "up";
-            }
-            else if(keyH.downPressed) {
-                direction = "down";
-            }
-            else if(keyH.leftPressed) {
-                direction = "left";
-            }
-            else if(keyH.rightPressed) {
-                direction = "right";
-            }
+        if (keyH.upPressed || keyH.downPressed || keyH.leftPressed || keyH.rightPressed) {
+            if (keyH.upPressed) direction = "up";
+            else if (keyH.downPressed) direction = "down";
+            else if (keyH.leftPressed) direction = "left";
+            else if (keyH.rightPressed) direction = "right";
 
             collisionOn = false;
             gp.cChecker.checkTile(this);
 
-            if(!collisionOn) {
-
+            if (!collisionOn) {
                 switch (direction) {
-                    case "up":
-                        worldY -= speed;
-                        break;
-                    case "down":
-                        worldY += speed;
-                        break;
-                    case "left":
-                        worldX -= speed;
-                        break;
-                    case "right":
-                        worldX += speed;
-                        break;
+                    case "up": worldY -= speed; break;
+                    case "down": worldY += speed; break;
+                    case "left": worldX -= speed; break;
+                    case "right": worldX += speed; break;
                 }
             }
 
             spriteCounter++;
-            if(spriteCounter > 10) {
-                if(spriteNum == 1) {
-                    spriteNum = 2;
-                } else if (spriteNum == 2) {
-                    spriteNum = 1;
-                }
+            if (spriteCounter > 10) {
+                spriteNum = (spriteNum == 1) ? 2 : 1;
                 spriteCounter = 0;
             }
         }
+
+        // Invincibility cooldown (1 sec / 60 frames)
+        if (invincible) {
+            invincibleCounter++;
+            if (invincibleCounter > 60) {
+                invincible = false;
+                invincibleCounter = 0;
+            }
+        }
+
+        // Projectile Shooting from Object Pool
         shootCooldown++;
-        if (shootCooldown >= 60) { // 60 frames = 1 second at 60 FPS
+        if (shootCooldown >= 60) {
             Enemy closestEnemy = null;
-            double closestDist = 200; // Attack range in pixels
+            double closestDist = 200;
 
             for (Enemy enemy : gp.enemies) {
                 if (!enemy.alive) continue;
-
                 double dist = Math.sqrt(Math.pow(enemy.worldX - worldX, 2) + Math.pow(enemy.worldY - worldY, 2));
                 if (dist < closestDist) {
                     closestDist = dist;
@@ -150,66 +122,51 @@ public class Player extends Entity {
                 }
             }
 
-            // Spawn projectile if an enemy is in range
             if (closestEnemy != null) {
-                gp.projectiles.add(new Projectile(gp, worldX, worldY, closestEnemy));
+                Projectile p = gp.projectilePool.obtain();
+                p.spawn(worldX, worldY, closestEnemy);
+                gp.projectiles.add(p);
                 shootCooldown = 0;
             }
         }
     }
 
-    public void draw(Graphics2D g2) {
-
-        BufferedImage image = null;
-
-        switch (direction) {
-            case "up":
-                if(spriteNum == 1) {
-                    image = up1;
-                }
-                if(spriteNum == 2) {
-                    image = up2;
-                }
-                break;
-            case "down":
-                if(spriteNum == 1) {
-                    image = down1;
-                }
-                if(spriteNum == 2) {
-                    image = down2;
-                }
-                break;
-            case "left":
-                if(spriteNum == 1) {
-                    image = left1;
-                }
-                if(spriteNum == 2) {
-                    image = left2;
-                }
-                break;
-            case "right":
-                if(spriteNum == 1) {
-                    image = right1;
-                }
-                if(spriteNum == 2) {
-                    image = right2;
-                }
-                break;
+    public void takeDamage(int damage) {
+        if (!invincible) {
+            life -= damage;
+            invincible = true;
+            if (life <= 0) {
+                life = 0;
+                alive = false;
+                System.out.println("Game Over!");
+            }
         }
-        g2.drawImage(image, screenX, screenY, null);
     }
+
+    public void draw(Graphics2D g2) {
+        BufferedImage image = null;
+        switch (direction) {
+            case "up": image = (spriteNum == 1) ? up1 : up2; break;
+            case "down": image = (spriteNum == 1) ? down1 : down2; break;
+            case "left": image = (spriteNum == 1) ? left1 : left2; break;
+            case "right": image = (spriteNum == 1) ? right1 : right2; break;
+        }
+
+        // Flash player when invincible
+        if (invincible && (invincibleCounter / 6) % 2 == 0) {
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
+        }
+
+        g2.drawImage(image, screenX, screenY, null);
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+    }
+
     public void gainExp(int amount) {
-
         exp += amount;
-
         if (exp >= nextLevelExp) {
-
             level++;
-
             exp -= nextLevelExp;
-
-            nextLevelExp = (int)(nextLevelExp * 1.5);
-
+            nextLevelExp = (int) (nextLevelExp * 1.5);
             System.out.println("Level Up! Current Level: " + level);
         }
     }
