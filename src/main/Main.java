@@ -2,7 +2,7 @@ package main;
 
 import javax.swing.JFrame;
 
-class Main {
+class   Main {
     public static void main(String[] args) {
 
         javax.swing.JFrame window = new JFrame();

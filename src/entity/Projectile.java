@@ -8,6 +8,7 @@ import java.awt.Rectangle;
 public class Projectile extends Entity {
     GamePanel gp;
     Enemy target;
+    public int damage = 1;
 
     public Projectile(GamePanel gp) {
         this.gp = gp;
@@ -15,10 +16,11 @@ public class Projectile extends Entity {
         this.solidArea = new Rectangle(0, 0, 8, 8);
     }
 
-    public void spawn(int startX, int startY, Enemy target) {
+    public void spawn(int startX, int startY, Enemy target, int damage) {
         this.worldX = startX;
         this.worldY = startY;
         this.target = target;
+        this.damage = damage;
         this.alive = true;
     }
 
@@ -33,7 +35,7 @@ public class Projectile extends Entity {
         double distance = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
 
         if (distance < speed) {
-            target.life -= 1;
+            target.life -= damage;
             if (target.life <= 0) target.alive = false;
             alive = false;
         } else {
