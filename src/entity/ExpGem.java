@@ -14,11 +14,13 @@ public class ExpGem extends Entity {
         this.solidArea = new Rectangle(0, 0, 12, 12);
     }
 
-    public void spawn(int worldX, int worldY) {
+    public void spawn(int worldX, int worldY, int expValue) {
         this.worldX = worldX;
         this.worldY = worldY;
+        this.expValue = expValue;
         this.alive = true;
     }
+
 
     public void draw(Graphics2D g2) {
         int screenX = worldX - gp.player.worldX + gp.player.screenX;
