@@ -181,7 +181,7 @@ public class Player extends Entity {
         }
     }
 
-    //  Apply damage to the player
+    // Apply damage to the player
     public void takeDamage(int damage) {
         if (!invincible) {
             life -= damage;
