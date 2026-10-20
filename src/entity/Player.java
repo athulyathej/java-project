@@ -181,7 +181,7 @@ public class Player extends Entity {
         }
     }
 
-    // Apply damage to the player
+    //  Apply damage to the player
     public void takeDamage(int damage) {
         if (!invincible) {
             life -= damage;
@@ -190,7 +190,6 @@ public class Player extends Entity {
             if (life <= 0) {
                 life = 0;
                 alive = false;
-                System.out.println("Game Over!");
             }
         }
     }
